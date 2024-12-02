@@ -1,28 +1,32 @@
 close all; clc; clear;
 
-taper_ratio = 0.001:0.025:1.001;
+taper_ratio = 0:0.025:1;
 c_r = 3;
+aoa = 5;
+
+
+
 
 for AR=4:2:10
-    for i=1:41
+    for i=1:length(taper_ratio)
         c_t = taper_ratio(i) * c_r;
         b = AR*(c_r+c_t)*0.5;
-    
+
         %              PLLT(b,a0_t,a0_r,c_t,c_r,aero_t,aero_r,geo_t,geo_r,N)
-        [e,c_L,c_Di] = PLLT(b,360,360,c_t,c_r,   0,    0,      5,   5,   20);
-    
+        [e,c_L,c_Di] = PLLT(b,2*pi,2*pi,c_t,c_r,   0,    0,      aoa,   aoa,50);
+
         inducedDragFactor(i, (AR/2)-1) = (c_Di*pi*AR/((c_L)^2)) - 1;
     end
 end
-
+hold on; grid on; grid minor;
 plot(taper_ratio, inducedDragFactor)
 xlabel("Taper ratio, c_t/c_r");
 ylabel("Induced drag factor, \delta");
 
 
 
-%              PLLT(b,a0_t,a0_r,c_t,c_r,aero_t,aero_r,geo_t,geo_r,N)
-%[~,c_L_AR10,~] = PLLT(10,360,360,  3,  6,   0,    0,      5,   5,   5);
+%             PLLT(b,a0_t,a0_r,c_t,c_r,aero_t,aero_r,geo_t,geo_r,N)
+%[e,c_L_AR10,Cd] = PLLT(35,2*pi,2*pi,  2,  6,   0,    0,      5,   5,   50);
 
 
 function [e,c_L,c_Di] = PLLT(b,a0_t,a0_r,c_t,c_r,aero_t,aero_r,geo_t,geo_r,N)
@@ -45,15 +49,15 @@ function [e,c_L,c_Di] = PLLT(b,a0_t,a0_r,c_t,c_r,aero_t,aero_r,geo_t,geo_r,N)
     aero_r=aero_r*pi/180;
     geo_r=geo_r*pi/180;
     geo_t=geo_t*pi/180;
-    a0_t=a0_t*pi/180;
-    a0_r=a0_r*pi/180;
     s = b*(c_r+c_t)/2;
     AR = (b^2)/s;
 
+    % 
+    % y = linspace(0, (b/2)-0.0001, N+1);
+    % %y = y(1:end-1);
+    % theta1 = flip(acos(2*y/b));
 
-    y = linspace(0, (b/2)-0.000001, N+1);
-    %y = y(1:end-1);
-    theta = flip(acos(2*y/b));
+    theta = (1:N) * pi / (2*N);
     
     a0 = a0_r + (a0_t-a0_r).*(cos(theta));
     chord = c_r + (c_t-c_r).*(cos(theta));
@@ -75,7 +79,7 @@ function [e,c_L,c_Di] = PLLT(b,a0_t,a0_r,c_t,c_r,aero_t,aero_r,geo_t,geo_r,N)
 
     FoCoeff = matrix2\matrix1;
 
-    for n=1:N
+    for n=2:N
         deltaSum(n,1) = n * (FoCoeff(n)/FoCoeff(1))^2; 
     end
     delta = sum(deltaSum);
@@ -84,6 +88,5 @@ function [e,c_L,c_Di] = PLLT(b,a0_t,a0_r,c_t,c_r,aero_t,aero_r,geo_t,geo_r,N)
     c_L = FoCoeff(1)*pi*AR;
     e = 1 / (1+delta);
     c_Di = (c_L^2)/pi/e/AR;
-
 
 end
